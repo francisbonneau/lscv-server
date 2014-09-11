@@ -1,6 +1,6 @@
 
-local redis = require 'redis'
-JSON = (loadfile "json.lua")() 
+local redis = require 'lib/redis'
+JSON = (loadfile "lib/json.lua")() 
 
 -- Chisel description
 description = "publish the events summary to a redis channel"
@@ -58,7 +58,7 @@ end
 
 function on_interval(ts_s, ts_ns, delta)
 
-    -- for key,value in pairs(events) do print(key,value) end
+    for key,value in pairs(events) do print(key,value) end
     
     local data = JSON:encode(events) 
 
