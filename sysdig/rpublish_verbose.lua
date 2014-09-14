@@ -57,6 +57,8 @@ end
 
 
 function on_interval(ts_s, ts_ns, delta)
+
+    for key,value in pairs(events) do print(key,value) end
     
     local data = JSON:encode(events) 
 
