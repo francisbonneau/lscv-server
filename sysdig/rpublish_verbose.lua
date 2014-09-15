@@ -37,7 +37,7 @@ function on_init()
 end
 
 
-events_latency = {}
+data = {}
 events_data = {}
 
 -- Event parsing callback
@@ -55,20 +55,11 @@ function on_event()
         event_id = evt.field(fuser) .. '.' .. evt.field(fproc) .. '.' .. evt.field(ftype)
 
         -- put the event latency in the hash containing all events for that id
-        if events_latency[event_id] == nil then
-            events_latency[event_id] = ''
+        if data[event_id] == nil then
+            data[event_id] = ''
         end
-        events_latency[event_id] = events_latency[event_id] .. evt.field(fenum) .. '-' .. evt.field(flat) .. ','  .. '-' .. evt.field(fargs)
 
-        -- if (string.len(evt.field(fargs)) >= 1) then 
-        --     -- put the event args in redis
-        --     -- redis_conn:set(evt.field(fenum), )
-        --     redis_conn:setex(evt.field(fenum), 30, evt.field(fargs))
-        -- end
-
-        if (string.len(evt.field(fargs)) >= 1) then 
-            events_data[evt.field(fenum)] = evt.field(fargs)
-        end
+        data[event_id] = data[event_id] .. evt.field(flat) .. '\t' .. evt.field(fargs) .. '\n'
 
     end
 
@@ -78,16 +69,11 @@ end
 
 function on_interval(ts_s, ts_ns, delta)
 
-    -- for key,value in pairs(events_latency) do print(key,value) end
-    -- print(" ----------------------- ")    
+    -- for key,value in pairs(data) do print(key,value) end
     
-    -- local latency_data = JSON:encode(events_latency) 
-    local latency_data = cjson.encode(events_latency) 
+    redis_conn:publish('data', cjson.encode(data) )
 
-    redis_conn:publish('data', latency_data)
-
-    events_latency = {}
-    events_data = {}
+    data = {}    
 
     return true
 end
