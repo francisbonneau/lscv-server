@@ -9,27 +9,38 @@ category = "PFE"
 
 -- Chisel argument list
 args = { }
- 
 
- function on_init()
+redis_conn = nil
+
+data_file = nil
+
+function on_init()
 
     -- chisel.set_interval_s(1)
     chisel.set_interval_ns(100 * 10^6)
 
-    -- Request the fileds that we need    
+    -- Request the fileds that we need
+    fenum = chisel.request_field("evt.num")
     fuser = chisel.request_field("user.name")
     fproc = chisel.request_field("proc.name")
     ftype = chisel.request_field("evt.type")
     flat = chisel.request_field("evt.latency")
     fdir = chisel.request_field("evt.dir")
+    fargs = chisel.request_field("evt.args")
+
+    redis_conn = redis.connect('127.0.0.1', 6379)
+
+    data_file = io.open("data", "w")
 
     -- set the filter
     -- chisel.set_filter("evt.type=" .. syscallname .. " and evt.dir = >")
     return true
+    
 end
 
 
-events = {}
+events_latency = {}
+events_data = {}
 
 -- Event parsing callback
 function on_event()
@@ -37,18 +48,29 @@ function on_event()
     --if evt.field(ftype) ~= 'switch' and evt.field(flat) > 0 then
     --if evt.field(ftype) == 'open' and evt.field(flat) > 0 then
 
+    -- capture only events with a latency more than 0 (not switch events)
+    -- and exit events only
+    --if evt.field(flat) > 0 and evt.field(fproc) ~= 'redis-server' then
     if evt.field(flat) > 0 then
-        
-        event_content = {}
+            
+        -- generate the event id ( user.process.syscall )
+        event_id = evt.field(fuser) .. '.' .. evt.field(fproc) .. '.' .. evt.field(ftype)
 
-        event_id = evt.field(fuser) .. '.' 
-        event_id = event_id .. evt.field(fproc) .. '.' 
-        event_id = event_id .. evt.field(ftype)
-
-        if events[event_id] == nil then
-            events[event_id] = ''
+        -- put the event latency in the hash containing all events for that id
+        if events_latency[event_id] == nil then
+            events_latency[event_id] = ''
         end
-        events[event_id] = events[event_id] .. evt.field(flat) .. ','
+        events_latency[event_id] = events_latency[event_id] .. evt.field(fenum) .. '-' .. evt.field(flat) .. ','  .. '-' .. evt.field(fargs)
+
+        -- if (string.len(evt.field(fargs)) >= 1) then 
+        --     -- put the event args in redis
+        --     -- redis_conn:set(evt.field(fenum), )
+        --     redis_conn:setex(evt.field(fenum), 30, evt.field(fargs))
+        -- end
+
+        if (string.len(evt.field(fargs)) >= 1) then 
+            events_data[evt.field(fenum)] = evt.field(fargs)
+        end
 
     end
 
@@ -58,14 +80,22 @@ end
 
 function on_interval(ts_s, ts_ns, delta)
 
-    for key,value in pairs(events) do print(key,value) end
+    -- for key,value in pairs(events_latency) do print(key,value) end
+    -- print(" ----------------------- ")    
     
-    local data = JSON:encode(events) 
+    local latency_data = JSON:encode(events_latency) 
 
-    local client = redis.connect('127.0.0.1', 6379)
-    client:publish('data', data)
+    redis_conn:publish('data', latency_data)
 
-    events = {}
+    -- for key, value in pairs(events_data) do 
+    --     -- redis_conn:setex(key, 30, events_data)
+    --     data_file:write(key .. ' ' .. value .. '\n')
+    -- end
+
+    -- redis_conn:setex('temp', 30, events_data)
+
+    events_latency = {}
+    events_data = {}
 
     return true
 end
