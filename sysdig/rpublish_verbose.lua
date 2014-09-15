@@ -1,6 +1,8 @@
 
 local redis = require 'lib/redis'
-JSON = (loadfile "lib/json.lua")() 
+-- JSON = (loadfile "lib/json.lua")() 
+
+local cjson = require "cjson"
 
 -- Chisel description
 description = "publish the events summary to a redis channel"
@@ -11,8 +13,6 @@ category = "PFE"
 args = { }
 
 redis_conn = nil
-
-data_file = nil
 
 function on_init()
 
@@ -29,8 +29,6 @@ function on_init()
     fargs = chisel.request_field("evt.args")
 
     redis_conn = redis.connect('127.0.0.1', 6379)
-
-    data_file = io.open("data", "w")
 
     -- set the filter
     -- chisel.set_filter("evt.type=" .. syscallname .. " and evt.dir = >")
@@ -83,16 +81,10 @@ function on_interval(ts_s, ts_ns, delta)
     -- for key,value in pairs(events_latency) do print(key,value) end
     -- print(" ----------------------- ")    
     
-    local latency_data = JSON:encode(events_latency) 
+    -- local latency_data = JSON:encode(events_latency) 
+    local latency_data = cjson.encode(events_latency) 
 
     redis_conn:publish('data', latency_data)
-
-    -- for key, value in pairs(events_data) do 
-    --     -- redis_conn:setex(key, 30, events_data)
-    --     data_file:write(key .. ' ' .. value .. '\n')
-    -- end
-
-    -- redis_conn:setex('temp', 30, events_data)
 
     events_latency = {}
     events_data = {}

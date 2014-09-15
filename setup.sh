@@ -39,6 +39,7 @@ echo " -- Getting lua5.2 & luarocks"
 echo " "
 sudo apt-get install --yes lua5.2 luarocks
 sudo luarocks install luasocket
+sudo luarocks install lua-cjson
 
 
 # # Old instructions
