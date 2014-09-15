@@ -28,6 +28,7 @@ echo " "
 echo " -- Getting Redis"
 echo " "
 sudo apt-get install --yes redis-server
+
 # configure redis to listen on all interfaces
 sudo sh -c "cat /etc/redis/redis.conf | sed s/bind\ 127/\\#\ bind\ 127/ > /etc/redis/redis.conf2"
 sudo mv /etc/redis/redis.conf /etc/redis/redis.conf.bkp

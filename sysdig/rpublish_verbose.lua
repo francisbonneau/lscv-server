@@ -38,7 +38,6 @@ end
 
 
 data = {}
-events_data = {}
 
 -- Event parsing callback
 function on_event()
@@ -47,8 +46,7 @@ function on_event()
     --if evt.field(ftype) == 'open' and evt.field(flat) > 0 then
 
     -- capture only events with a latency more than 0 (not switch events)
-    -- and exit events only
-    --if evt.field(flat) > 0 and evt.field(fproc) ~= 'redis-server' then
+    -- and exit events only    
     if evt.field(flat) > 0 then
             
         -- generate the event id ( user.process.syscall )
@@ -69,7 +67,7 @@ end
 
 function on_interval(ts_s, ts_ns, delta)
 
-    -- for key,value in pairs(data) do print(key,value) end
+    for key,value in pairs(data) do print(key,value) end
     
     redis_conn:publish('data', cjson.encode(data) )
 
