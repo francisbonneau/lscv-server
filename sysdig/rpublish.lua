@@ -17,7 +17,7 @@ redis_conn = nil
 function on_init()
 
     -- chisel.set_interval_s(1)
-    chisel.set_interval_ns(100 * 10^6)
+    chisel.set_interval_ns(100 * 10^6) -- every 100 ms or (0.1) second
 
     -- Request the fileds that we need
     fenum = chisel.request_field("evt.num")
@@ -37,6 +37,8 @@ function on_init()
 end
 
 
+enter_evts_args = {}
+
 data = {}
 
 -- Event parsing callback
@@ -44,6 +46,12 @@ function on_event()
 
     --if evt.field(ftype) ~= 'switch' and evt.field(flat) > 0 then
     --if evt.field(ftype) == 'open' and evt.field(flat) > 0 then
+
+    -- capture only enter events with a latency 
+    -- store args in a temporary hash
+    if evt.field(ftype) ~= 'switch' and evt.field(flat) == 0 then        
+        enter_evts_args[evt.field(fenum)] = evt.field(fargs)
+    end
 
     -- capture only events with a latency more than 0 (not switch events)
     -- and exit events only    
@@ -57,7 +65,13 @@ function on_event()
             data[event_id] = ''
         end
 
-        data[event_id] = data[event_id] .. evt.field(flat) .. '\t' .. evt.field(fargs) .. '\n'
+        local enter_args = enter_evts_args[evt.field(fenum) - 1 ]
+        if (enter_args == nil) then
+            enter_args = ''
+        end
+        local exit_args = evt.field(fargs)
+
+        data[event_id] = data[event_id] .. evt.field(flat) .. '\t' .. enter_args .. '\t'.. exit_args .. '\n'
 
     end
 
@@ -70,6 +84,7 @@ function on_interval(ts_s, ts_ns, delta)
     redis_conn:publish('data', cjson.encode(data) )
 
     data = {}    
+    enter_evts_args = {}
 
     return true
 end
