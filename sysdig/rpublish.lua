@@ -30,15 +30,31 @@ function on_init()
 
     redis_conn = redis.connect('127.0.0.1', 6379)
 
-    -- set the filter
-    -- chisel.set_filter("evt.type=" .. syscallname .. " and evt.dir = >")
+
+    -- Save information about the machine in redis
+    local sysinfo = ""
+
+    sysinfo = sysinfo .. "hostname     : " .. backticks_string("hostname")
+
+    sysinfo = sysinfo .. "uptime     : " .. backticks_string("uptime") .. "\n"
+
+    sysinfo = sysinfo .. "cpus count   : " .. 
+        backticks_string("grep -c processor /proc/cpuinfo") .. "\n"
+
+    sysinfo = sysinfo .. 
+        backticks_string("cat /proc/cpuinfo | grep 'model name' | head -n1") .. "\n"
+
+    sysinfo = sysinfo .. "memory       : " ..
+        backticks_string("cat /proc/meminfo | head -n1 | cut -c 18-") .. "\n"
+
+    redis_conn:set('system_info', sysinfo)
+
     return true
     
 end
 
 
 enter_evts_args = {}
-
 data = {}
 
 -- Event parsing callback
@@ -65,6 +81,7 @@ function on_event()
             data[event_id] = ''
         end
 
+        -- find the enter args for that event and combine them to the exit args
         local enter_args = enter_evts_args[evt.field(fenum) - 1 ]
         if (enter_args == nil) then
             enter_args = ''
@@ -86,11 +103,29 @@ function on_interval(ts_s, ts_ns, delta)
     data = {}    
     enter_evts_args = {}
 
+    -- check if there is a filter to apply
+    if pcall(apply_filter) then       
+        -- sucess
+    else
+        -- error
+    end
+        
+
     return true
 end
 
 
-function round(num, idp)
-  local mult = 10^(idp or 0)
-  return math.floor(num * mult + 0.5) / mult
+-- Function to fetch a new filter applied in redis
+function apply_filter()
+   local filter = redis_conn:get('filter')   
+   chisel.set_filter(filter)
+end
+
+-- Function to execute OS command and get the output as string
+function backticks_string(cmd)
+    local string
+    local pipe = assert(io.popen(cmd),
+        "backticks_string(" .. cmd .. ") failed.")
+    local line = pipe:read("*all")
+    return line
 end
