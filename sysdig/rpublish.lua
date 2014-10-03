@@ -32,22 +32,20 @@ function on_init()
 
 
     -- Save information about the machine in redis
-    local sysinfo = ""
+    local hostname = backticks_string("hostname")
+    redis_conn:set('hostname', hostname)
 
-    sysinfo = sysinfo .. "hostname     : " .. backticks_string("hostname")
+    local uptime = backticks_string("uptime")
+    redis_conn:set('uptime', uptime)
 
-    sysinfo = sysinfo .. "uptime     : " .. backticks_string("uptime") .. "\n"
+    local cpu_info = backticks_string("cat /proc/cpuinfo | grep 'model name' | head -n1 | cut -c 14-")
+    redis_conn:set('cpu_info', cpu_info)
+    
+    local cpu_count = backticks_string("grep -c processor /proc/cpuinfo")
+    redis_conn:set('cpu_count', cpu_count)
 
-    sysinfo = sysinfo .. "cpus count   : " .. 
-        backticks_string("grep -c processor /proc/cpuinfo") .. "\n"
-
-    sysinfo = sysinfo .. 
-        backticks_string("cat /proc/cpuinfo | grep 'model name' | head -n1") .. "\n"
-
-    sysinfo = sysinfo .. "memory       : " ..
-        backticks_string("cat /proc/meminfo | head -n1 | cut -c 18-") .. "\n"
-
-    redis_conn:set('system_info', sysinfo)
+    local memory = backticks_string("cat /proc/meminfo | head -n1 | cut -c 18-")
+    redis_conn:set('memory', memory)
 
     return true
     
