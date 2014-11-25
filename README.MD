@@ -1,7 +1,7 @@
 
-## LSCV (Linux System Call Visualization) project
+## LSCV Server module
 
-## Server module
+LSCV (Linux System Call Visualization) project
 
 ### Description
 
