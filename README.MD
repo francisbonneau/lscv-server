@@ -7,8 +7,7 @@
 
 This module consist of a [Sysdig](http://www.sysdig.org/) Chisel built to collect OS data (system calls events) and send it to the [client UI](https://github.com/francisbonneau/lscv-client) (via a [redis](http://www.redis.io/) pub/sub channel) where it is going to be analyzed and displayed.
 
-**Tested on Ubuntu 13.10 and 14.04, but should work on any distribution supported by Sysdig & Redis*
-
+*Tested on Ubuntu 13.10 and 14.04, but should work on any distribution supported by Sysdig & Redis*
 
 ### Quick install with Vagrant
 
@@ -17,7 +16,6 @@ Also included is a [Vagrant](https://www.vagrantup.com/) script to build a Ubunt
 ```
 cd lscv-server
 vagrant up
-
 ```
 
 ### Installation
@@ -59,25 +57,15 @@ Once the installation is completed, simply start sysdig with the lscv-chisel lik
 
 ```
 sudo sysdig -c lscv-chisel.lua &
-
 ```
 
 Or use the init script to start the daemon : 
 
 ```
 /etc/init.d/lscv-server start
-
 ```
 
 Note: the init script is generated with pleaserun.sh using https://github.com/jordansissel/pleaserun, so modify the arguments in that file to change the init script platform or arguments.
-
-## Building a deb or rpm package
-
-https://github.com/jordansissel/fpm
-
-```
-gem install fpm
-```
 
 
 ### Documentation
@@ -91,7 +79,7 @@ Francis Bonneau, autumn 2014
 Created for the course GTI792 at l'ÉTS (http://etsmtl.ca/)
 
 
-### Credits 
+### Credits
 
 * [Sysdig](http://www.sysdig.org/) 
 * [Lua](http://www.lua.org/)

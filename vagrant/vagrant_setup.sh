@@ -46,4 +46,12 @@ sudo apt-get install --yes luarocks
 sudo luarocks install luasocket
 sudo luarocks install lua-cjson
 
+echo -e "\n -- Moving files to /etc/lscv-server \n"
+sudo cp init.d/lscv-server /etc/init.d/
+sudo mkdir /etc/lscv-server
+sudo cp -r lib/ lscv-chisel.lua /etc/lscv-server
+
+echo -e "\n -- Starting the service \n"
+sudo /etc/init.d/lscv-server start
+
 echo -e "\n -- Done ! \n"
