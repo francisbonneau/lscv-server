@@ -18,10 +18,16 @@ category = "LSCV"
 args = { }
 
 -- Variables
+
 redis_host = '127.0.0.1'
 redis_port = 6379
 redis_push_interval_ns = 100 * 10^6 -- every 100 ms or (0.1) second
 
+get_hostname_cmd = "hostname"
+get_uptime_cmd = "uptime"
+get_cpuinfo_cmd = "cat /proc/cpuinfo | grep 'model name' | head -n1 | cut -c 14-"
+get_cpucount_cmd = "grep -c processor /proc/cpuinfo"
+get_meminfo_cmd = "cat /proc/meminfo | head -n1 | cut -c 18-"
 
 redis_conn = nil
 
@@ -39,24 +45,15 @@ function on_init()
     fargs = chisel.request_field("evt.args")
 
     redis_conn = redis.connect(redis_host, redis_port)
-
     print("­- Connected to redis")
 
-    -- Save information about the machine in redis
-    local hostname = backticks_string("hostname")
-    redis_conn:set('hostname', hostname)
+    -- Save information about the machine in redis 
 
-    local uptime = backticks_string("uptime")
-    redis_conn:set('uptime', uptime)
-
-    local cpu_info = backticks_string("cat /proc/cpuinfo | grep 'model name' | head -n1 | cut -c 14-")
-    redis_conn:set('cpu_info', cpu_info)
-    
-    local cpu_count = backticks_string("grep -c processor /proc/cpuinfo")
-    redis_conn:set('cpu_count', cpu_count)
-
-    local memory = backticks_string("cat /proc/meminfo | head -n1 | cut -c 18-")
-    redis_conn:set('memory', memory)
+    redis_conn:set('hostname', exec_cmd(get_hostname_cmd))
+    redis_conn:set('uptime', exec_cmd(get_uptime_cmd))   
+    redis_conn:set('cpu_info', exec_cmd(get_cpuinfo_cmd))        
+    redis_conn:set('cpu_count', exec_cmd(get_cpucount_cmd))    
+    redis_conn:set('memory', exec_cmd(get_meminfo_cmd))
 
 
     print("­- Data collection running...")
@@ -72,10 +69,7 @@ data = {}
 -- Event parsing callback
 function on_event()
 
-    --if evt.field(ftype) ~= 'switch' and evt.field(flat) > 0 then
-    --if evt.field(ftype) == 'open' and evt.field(flat) > 0 then
-
-    -- capture only enter events with a latency 
+    -- capture only enter events with a latency and
     -- store args in a temporary hash
     if evt.field(ftype) ~= 'switch' and evt.field(flat) == 0 then        
         enter_evts_args[evt.field(fenum)] = evt.field(fargs)
@@ -142,10 +136,9 @@ function apply_filter()
 end
 
 -- Function to execute OS command and get the output as string
-function backticks_string(cmd)
+function exec_cmd(cmd)
     local string
-    local pipe = assert(io.popen(cmd),
-        "backticks_string(" .. cmd .. ") failed.")
+    local pipe = assert(io.popen(cmd), "exec_cmd(" .. cmd .. ") failed.")
     local line = pipe:read("*all")
     return line
 end
