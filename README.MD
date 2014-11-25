@@ -5,14 +5,14 @@
 
 ### Description
 
-This module consist of a [Sysdig](http://www.sysdig.org/) Chisel built to collect OS data (system calls events) and send it to the [client UI](https://github.com/francisbonneau/lscv-client) (via a [redis](http://www.sysdig.org/) pub/sub channel) where it is going to be analyzed and displayed.
+This module consist of a [Sysdig](http://www.sysdig.org/) Chisel built to collect OS data (system calls events) and send it to the [client UI](https://github.com/francisbonneau/lscv-client) (via a [redis](http://www.redis.io/) pub/sub channel) where it is going to be analyzed and displayed.
 
-**Tested on Ubuntu 13.10 and 14.04*
+**Tested on Ubuntu 13.10 and 14.04, but should work on any distribution supported by Sysdig & Redis*
 
 
 ### Quick install with Vagrant
 
-Also included is a [Varant](https://www.vagrantup.com/) script to build a Ubuntu 13.10 virtual machine with all the dependencies automatically installed. First install Virtualbox and Vagrant on your machine, then start the automated installation with the following commands : 
+Also included is a [Vagrant](https://www.vagrantup.com/) script to build a Ubuntu 13.10 virtual machine with all the dependencies automatically installed. First install Virtualbox and Vagrant on your machine, then start the automated installation with the following commands : 
 
 ```
 cd lscv-server
@@ -47,7 +47,6 @@ sudo luarocks install luasocket
 sudo luarocks install lua-cjson
 
 # Copy the init script and files in /etc for a more permanent installation (optionnal)
-
 sudo cp init.d/lscv-server /etc/init.d/
 sudo mkdir /etc/lscv-server
 sudo cp -r lib/ lscv-chisel.lua /etc/lscv-server
@@ -70,27 +69,35 @@ Or use the init script to start the daemon :
 
 ```
 
+Note: the init script is generated with pleaserun.sh using https://github.com/jordansissel/pleaserun, so modify the arguments in that file to change the init script platform or arguments.
+
 ## Building a deb or rpm package
 
 https://github.com/jordansissel/fpm
 
-https://github.com/jordansissel/pleaserun
-
 ```
-gem install pleaserun
 gem install fpm
 ```
-
 
 
 ### Documentation
 
 See the [home page of the project](https://francisbonneau.github.io/lscv/) and the [documentation](https://francisbonneau.github.io/lscv-doc/) (in french) for more information about the project.
 
-
-## Author
+### Author
 
 Francis Bonneau, autumn 2014
 
 Created for the course GTI792 at l'ÉTS (http://etsmtl.ca/)
 
+
+### Credits 
+
+* [Sysdig](http://www.sysdig.org/) 
+* [Lua](http://www.lua.org/)
+* [Lua CJSON](http://www.kyne.com.au/~mark/software/lua-cjson.php)
+* [redis-lua](https://github.com/nrk/redis-lua)
+* [redis](http://www.redis.io/)
+* [Vagrant](https://www.vagrantup.com/)
+* [Pleaserun](https://github.com/jordansissel/pleaserun)
+* [FPM](https://github.com/jordansissel/fpm)

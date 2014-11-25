@@ -8,4 +8,5 @@
 # https://github.com/jordansissel/pleaserun
 #
 
+# gem install pleaserun
 pleaserun --platform sysv --version lsb-3.1 --user root --name lscv-server --chdir /etc/lscv-server sysdig -c lscv-chisel.lua
