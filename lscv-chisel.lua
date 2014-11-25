@@ -1,13 +1,18 @@
+--
+-- LSCV (Linux System Call Visualization) project
+-- Francis Bonneau, autumn 2014
+-- Created for the course GTI792 at l'ÉTS (http://etsmtl.ca/)
+--
+-- Sysdig Chisel to collect data and send it to a redis channel
+--
 
 local redis = require 'lib/redis'
--- JSON = (loadfile "lib/json.lua")() 
-
 local cjson = require "cjson"
 
 -- Chisel description
 description = "publish the events summary to a redis channel"
 short_description = "redis publish"
-category = "PFE"
+category = "LSCV"
 
 -- Chisel argument list
 args = { }
@@ -17,7 +22,7 @@ redis_conn = nil
 function on_init()
 
     -- chisel.set_interval_s(1)
-    chisel.set_interval_ns(100 * 10^6) -- every 100 ms or (0.1) second
+    chisel.set_interval_ns(10 * 10^6) -- every 100 ms or (0.1) second
 
     -- Request the fileds that we need
     fenum = chisel.request_field("evt.num")
@@ -29,7 +34,6 @@ function on_init()
     fargs = chisel.request_field("evt.args")
 
     redis_conn = redis.connect('127.0.0.1', 6379)
-
 
     -- Save information about the machine in redis
     local hostname = backticks_string("hostname")
@@ -106,8 +110,7 @@ function on_interval(ts_s, ts_ns, delta)
         -- sucess
     else
         -- error
-    end
-        
+    end        
 
     return true
 end
