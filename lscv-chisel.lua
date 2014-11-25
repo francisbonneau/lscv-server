@@ -17,12 +17,17 @@ category = "LSCV"
 -- Chisel argument list
 args = { }
 
+-- Variables
+redis_host = '127.0.0.1'
+redis_port = 6379
+redis_push_interval_ns = 100 * 10^6 -- every 100 ms or (0.1) second
+
+
 redis_conn = nil
 
 function on_init()
-
-    -- chisel.set_interval_s(1)
-    chisel.set_interval_ns(10 * 10^6) -- every 100 ms or (0.1) second
+    
+    chisel.set_interval_ns(redis_push_interval_ns) 
 
     -- Request the fileds that we need
     fenum = chisel.request_field("evt.num")
@@ -33,7 +38,9 @@ function on_init()
     fdir = chisel.request_field("evt.dir")
     fargs = chisel.request_field("evt.args")
 
-    redis_conn = redis.connect('127.0.0.1', 6379)
+    redis_conn = redis.connect(redis_host, redis_port)
+
+    print("­- Connected to redis")
 
     -- Save information about the machine in redis
     local hostname = backticks_string("hostname")
@@ -50,6 +57,9 @@ function on_init()
 
     local memory = backticks_string("cat /proc/meminfo | head -n1 | cut -c 18-")
     redis_conn:set('memory', memory)
+
+
+    print("­- Data collection running...")
 
     return true
     
@@ -76,21 +86,30 @@ function on_event()
     if evt.field(flat) > 0 then
             
         -- generate the event id ( user.process.syscall )
-        event_id = evt.field(fuser) .. '.' .. evt.field(fproc) .. '.' .. evt.field(ftype)
+        evt_username = evt.field(fuser)
+        evt_procname = evt.field(fproc)
+        evt_type = evt.field(ftype)
 
-        -- put the event latency in the hash containing all events for that id
-        if data[event_id] == nil then
-            data[event_id] = ''
+        -- Make sure the value are not nil
+        if evt_procname ~= nil and evt_procname ~= nil and evt_type ~= nil then
+
+            event_id = evt_procname .. '.' .. evt_procname .. '.' .. evt_type
+
+            -- put the event latency in the hash containing all events for that id
+            if data[event_id] == nil then
+                data[event_id] = ''
+            end
+
+            -- find the enter args for that event and combine them to the exit args
+            local enter_args = enter_evts_args[evt.field(fenum) - 1 ]
+            if (enter_args == nil) then
+                enter_args = ''
+            end
+            local exit_args = evt.field(fargs)
+
+            data[event_id] = data[event_id] .. evt.field(flat) .. '\t' .. enter_args .. '\t'.. exit_args .. '\n'
+
         end
-
-        -- find the enter args for that event and combine them to the exit args
-        local enter_args = enter_evts_args[evt.field(fenum) - 1 ]
-        if (enter_args == nil) then
-            enter_args = ''
-        end
-        local exit_args = evt.field(fargs)
-
-        data[event_id] = data[event_id] .. evt.field(flat) .. '\t' .. enter_args .. '\t'.. exit_args .. '\n'
 
     end
 
